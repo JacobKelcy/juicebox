@@ -7,7 +7,8 @@ const {
   createPost,
   updatePost,
   getAllPosts,
-  getPostsByUser
+  createTags,
+  addTagsToPosts,
 } = require('./index');
 
 async function dropTables() {
@@ -16,6 +17,8 @@ async function dropTables() {
 
     // have to make sure to drop in correct order
     await client.query(`
+      DROP TABLE IF EXISTS posts_tags_tagId_fkey;
+      DROP TABLE IF EXISTS tags;
       DROP TABLE IF EXISTS posts;
       DROP TABLE IF EXISTS users;
     `);
@@ -47,7 +50,27 @@ async function createTables() {
         content TEXT NOT NULL,
         active BOOLEAN DEFAULT true
       );
+
+      CREATE TABLE tags (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL
+      );
+
+      CREATE TABLE posts_tags (
+        "postId" INTEGER REFERENCES posts(id),
+        "tagId" INTEGER REFERENCES tags(id),
+        UNIQUE("postId", "tagId")
+      )
     `);
+
+    //through tables allow us to capture relations that are many to many
+    //many to many means that each thing can point to multiple instances of another thing\
+    //no thing exclusively belongs to any other thing (in the through table relationship)
+
+    //this is in contrast to what we have set up with users and posts where we got an author id that references users. this is a 1 to many relation
+    //one to many relationships involve 0 records pointing to one unique instance in another table
+    //in this case, every user can have multiple (or 0) posts
+    //BUT, every post belongs to exactly ONE user
 
     console.log("Finished building tables!");
   } catch (error) {
@@ -115,6 +138,30 @@ async function createInitialPosts() {
   }
 }
 
+async function createInitialTags() {
+  try {
+    console.log("Starting to create tags...");
+
+    const [happy, sad, inspo, catman] = await createTags([
+      '#happy', 
+      '#worst-day-ever', 
+      '#youcandoanything',
+      '#catmandoeverything'
+    ]);
+
+    const [post1, post2, post3] = await getAllPosts();
+
+    await addTagsToPost(post1.id, [happy, inspo]);
+    await addTagsToPost(post2.id, [sad, inspo]);
+    await addTagsToPost(post3.id, [happy, catman, inspo]);
+
+    console.log("Finished creating tags!");
+  } catch (error) {
+    console.log("Error creating tags!");
+    throw error;
+  }
+}
+
 async function rebuildDB() {
   try {
     client.connect();
@@ -123,6 +170,7 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
+    await createInitialTags();
   } catch (error) {
     console.log("Error during rebuildDB")
     throw error;
