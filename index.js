@@ -4,6 +4,8 @@ const server = express();
 const morgan = require("morgan");
 const { client } = require("./db");
 
+require("dotenv").config();
+
 const apiRouter = require("./api");
 
 server.use(morgan("dev"));
