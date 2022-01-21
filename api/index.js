@@ -47,6 +47,14 @@ apiRouter.use(async (req, res, next) => {
   }
 });
 
+apiRouter.use((req, res, next) => {
+  if (req.user) {
+    console.log("User is set:", req.user);
+  }
+
+  next();
+});
+
 // these are middleware!
 apiRouter.use("/users", usersRouter);
 apiRouter.use("/posts", postsRouter);
@@ -54,7 +62,7 @@ apiRouter.use("/tags", tagsRouter);
 
 // this is our error handling middleware for the apiRouter
 apiRouter.use((error, req, res, next) => {
-  res.send({
+  next({
     name: error.name,
     message: error.message,
   });
