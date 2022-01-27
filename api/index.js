@@ -32,10 +32,13 @@ apiRouter.use(async (req, res, next) => {
     try {
       const { id } = jwt.verify(token, JWT_SECRET);
 
+      console.log("hit req.user logic");
+
       if (id) {
         req.user = await getUserById(id);
         next();
       }
+      next();
     } catch ({ name, message }) {
       next({ name, message });
     }
