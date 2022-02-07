@@ -21,7 +21,7 @@ usersRouter.get("/", async (req, res) => {
 
 usersRouter.post("/login", async (req, res, next) => {
   const { username, password } = req.body;
-  console.log("hi");
+  console.log(`hi ${username}!`);
 
   // request must have both
   if (!username || !password) {
